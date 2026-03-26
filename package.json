@@ -30,4 +30,7 @@
     "vite": "^8.0.1",
     "vite-plugin-pwa": "^1.2.0"
   }
+  "engines": {
+    "node": ">=22.12.0"
+  }
 }
