@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { resetUsedTracks } from '../services/spotifyApi'
 
 // Normaliza texto para comparación flexible
 // "AC/DC", "ac dc", "AC DC" → "acdc"
@@ -27,7 +28,9 @@ export const useGameStore = create((set, get) => ({
     phase: 'setup',
     lastResult: null,
 
-    setupGame: (playerNames) => set({
+    setupGame: (playerNames) => {
+        resetUsedTracks()
+        return set({
         players: playerNames.map(name => ({
             name,
             score: 0,
@@ -37,7 +40,8 @@ export const useGameStore = create((set, get) => ({
         currentPlayerIndex: 0,
         currentCard: null,
         lastResult: null,
-    }),
+        })
+    },
 
     setCurrentCard: (card) => set({ currentCard: card }),
 

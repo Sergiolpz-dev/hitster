@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
-import { getToken, getValidToken } from '../auth/spotify'
+import { getValidToken } from '../auth/spotify'
 
 export function useSpotifyPlayer() {
-    const [player, setPlayer] = useState(null)
     const [deviceId, setDeviceId] = useState(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [isReady, setIsReady] = useState(false)
     const hasInit = useRef(false)
+    const playerRef = useRef(null)
 
     useEffect(() => {
         if (hasInit.current) return
@@ -21,13 +21,12 @@ export function useSpotifyPlayer() {
             const spotifyPlayer = new window.Spotify.Player({
                 name: 'Hitster App',
                 getOAuthToken: cb => {
-                    getValidToken().then(token => cb(token)) // ← refresco automático
+                    getValidToken().then(token => cb(token))
                 },
                 volume: 0.8,
             })
 
             spotifyPlayer.addListener('ready', ({ device_id }) => {
-                console.log('Player listo, device_id:', device_id)
                 setDeviceId(device_id)
                 setIsReady(true)
             })
@@ -42,10 +41,15 @@ export function useSpotifyPlayer() {
             })
 
             spotifyPlayer.connect()
-            setPlayer(spotifyPlayer)
+            playerRef.current = spotifyPlayer
         }
 
         return () => {
+            window.onSpotifyWebPlaybackSDKReady = null
+            if (playerRef.current) {
+                playerRef.current.disconnect()
+                playerRef.current = null
+            }
             if (document.body.contains(script)) {
                 document.body.removeChild(script)
             }
@@ -54,8 +58,8 @@ export function useSpotifyPlayer() {
 
     const playTrack = async (trackId) => {
         if (!deviceId) return
-        const token = await getValidToken() // ← refresco automático
-        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        const token = await getValidToken()
+        const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
             method: 'PUT',
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -65,17 +69,20 @@ export function useSpotifyPlayer() {
                 uris: [`spotify:track:${trackId}`],
             }),
         })
+        if (!res.ok && res.status !== 204) {
+            throw new Error(`Playback error: ${res.status}`)
+        }
         setIsPlaying(true)
     }
 
     const togglePlay = () => {
-        if (!player) return
-        player.togglePlay()
+        if (!playerRef.current) return
+        playerRef.current.togglePlay()
     }
 
     const stopTrack = () => {
-        if (!player) return
-        player.pause()
+        if (!playerRef.current) return
+        playerRef.current.pause()
         setIsPlaying(false)
     }
 

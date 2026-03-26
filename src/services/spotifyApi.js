@@ -17,7 +17,14 @@ const SEARCH_QUERIES = [
 
 const usedTrackIds = new Set()
 
+export function resetUsedTracks() {
+    usedTrackIds.clear()
+}
+
 export async function getNextTrack() {
+    // Evita crecimiento ilimitado: limpia cuando supera 100 IDs
+    if (usedTrackIds.size > 100) usedTrackIds.clear()
+
     for (let attempt = 0; attempt < 5; attempt++) {
         const query = SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)]
 
@@ -30,6 +37,15 @@ export async function getNextTrack() {
         const res = await fetch(`${BASE_URL}/search?${params}`, {
             headers: await authHeaders()
         })
+
+        if (!res.ok) {
+            if (res.status === 401) {
+                // Token expirado — getValidToken lo refrescará en el próximo intento
+                continue
+            }
+            throw new Error(`Spotify API error: ${res.status}`)
+        }
+
         const data = await res.json()
 
         if (!data.tracks?.items?.length) continue

@@ -13,6 +13,13 @@ export default function Callback() {
 
         const params = new URLSearchParams(window.location.search)
         const code = params.get('code')
+        const returnedState = params.get('state')
+        const storedState = sessionStorage.getItem('spotify_oauth_state')
+
+        if (!returnedState || returnedState !== storedState) {
+            navigate('/')
+            return
+        }
 
         if (code) {
             exchangeToken(code).then(() => navigate('/setup'))
