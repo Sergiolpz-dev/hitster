@@ -45,13 +45,13 @@ export const useGameStore = create((set, get) => ({
 
     setCurrentCard: (card) => set({ currentCard: card }),
 
-    submitGuess: (guessedArtist, guessedTitle, timelinePosition) => {
+    submitGuess: (guessedArtist, guessedTitle, timelinePosition, overrideArtist = false, overrideTitle = false) => {
         const { currentCard, players, currentPlayerIndex } = get()
         const player = players[currentPlayerIndex]
         let pointsEarned = 0
 
-        const artistCorrect = normalize(guessedArtist) === normalize(currentCard.artist)
-        const titleCorrect = normalize(guessedTitle) === normalize(currentCard.title)
+        const artistCorrect = overrideArtist || normalize(guessedArtist) === normalize(currentCard.artist)
+        const titleCorrect = overrideTitle || normalize(guessedTitle) === normalize(currentCard.title)
 
         if (artistCorrect) pointsEarned += 1
         if (titleCorrect) pointsEarned += 1

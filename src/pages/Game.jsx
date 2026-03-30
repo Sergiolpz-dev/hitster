@@ -17,6 +17,8 @@ export default function Game() {
     const [guessArtist, setGuessArtist] = useState('')
     const [guessTitle, setGuessTitle] = useState('')
     const [selectedPosition, setSelectedPosition] = useState(null)
+    const [overrideArtist, setOverrideArtist] = useState(false)
+    const [overrideTitle, setOverrideTitle] = useState(false)
 
     const currentPlayer = players[currentPlayerIndex]
 
@@ -42,10 +44,12 @@ export default function Game() {
 
     const handleSubmitGuess = () => {
         if (selectedPosition === null) return
-        submitGuess(guessArtist, guessTitle, selectedPosition)
+        submitGuess(guessArtist, guessTitle, selectedPosition, overrideArtist, overrideTitle)
         setGuessArtist('')
         setGuessTitle('')
         setSelectedPosition(null)
+        setOverrideArtist(false)
+        setOverrideTitle(false)
     }
 
     const handleNextTurn = () => {
@@ -161,22 +165,48 @@ export default function Game() {
                                     <p className="text-zinc-500 text-xs tracking-widest uppercase font-body">
                                         Tus respuestas (+1 punto cada una)
                                     </p>
-                                    <input
-                                        type="text"
-                                        value={guessArtist}
-                                        onChange={e => setGuessArtist(e.target.value)}
-                                        placeholder="Artista..."
-                                        className="w-full bg-zinc-900 border border-zinc-800 focus:border-yellow-400
-                                            text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={guessTitle}
-                                        onChange={e => setGuessTitle(e.target.value)}
-                                        placeholder="Título de la canción..."
-                                        className="w-full bg-zinc-900 border border-zinc-800 focus:border-yellow-400
-                                            text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={guessArtist}
+                                            onChange={e => setGuessArtist(e.target.value)}
+                                            placeholder="Artista..."
+                                            className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-yellow-400
+                                                text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setOverrideArtist(v => !v)}
+                                            title="Marcar artista como correcto"
+                                            className={`w-12 border-2 transition-all font-display text-lg flex items-center justify-center
+                                                ${overrideArtist
+                                                    ? 'border-green-500 bg-green-500/20 text-green-400'
+                                                    : 'border-zinc-700 hover:border-zinc-500 text-zinc-600'
+                                                }`}>
+                                            ✓
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={guessTitle}
+                                            onChange={e => setGuessTitle(e.target.value)}
+                                            placeholder="Título de la canción..."
+                                            className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-yellow-400
+                                                text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setOverrideTitle(v => !v)}
+                                            title="Marcar título como correcto"
+                                            className={`w-12 border-2 transition-all font-display text-lg flex items-center justify-center
+                                                ${overrideTitle
+                                                    ? 'border-green-500 bg-green-500/20 text-green-400'
+                                                    : 'border-zinc-700 hover:border-zinc-500 text-zinc-600'
+                                                }`}>
+                                            ✓
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Línea temporal */}
