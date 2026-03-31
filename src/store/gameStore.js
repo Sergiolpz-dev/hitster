@@ -45,13 +45,13 @@ export const useGameStore = create((set, get) => ({
 
     setCurrentCard: (card) => set({ currentCard: card }),
 
-    submitGuess: (guessedArtist, guessedTitle, timelinePosition, overrideArtist = false, overrideTitle = false) => {
+    submitGuess: (guessedArtist, guessedTitle, timelinePosition) => {
         const { currentCard, players, currentPlayerIndex } = get()
         const player = players[currentPlayerIndex]
         let pointsEarned = 0
 
-        const artistCorrect = overrideArtist || normalize(guessedArtist) === normalize(currentCard.artist)
-        const titleCorrect = overrideTitle || normalize(guessedTitle) === normalize(currentCard.title)
+        const artistCorrect = normalize(guessedArtist) === normalize(currentCard.artist)
+        const titleCorrect = normalize(guessedTitle) === normalize(currentCard.title)
 
         if (artistCorrect) pointsEarned += 1
         if (titleCorrect) pointsEarned += 1
@@ -74,6 +74,28 @@ export const useGameStore = create((set, get) => ({
         const result = { artistCorrect, titleCorrect, timelineCorrect, pointsEarned }
         set({ players: updatedPlayers, phase: 'result', lastResult: result })
         return result
+    },
+
+    overrideGuess: (field) => {
+        const { players, currentPlayerIndex, lastResult, currentCard } = get()
+        if (!lastResult || lastResult[field]) return
+
+        const updatedPlayers = players.map((p, i) => {
+            if (i !== currentPlayerIndex) return p
+            const newTimeline = field === 'timelineCorrect' && currentCard
+                ? [...p.timeline, currentCard].sort((a, b) => a.year - b.year)
+                : p.timeline
+            return { ...p, score: p.score + (field === 'timelineCorrect' ? 2 : 1), timeline: newTimeline }
+        })
+
+        set({
+            players: updatedPlayers,
+            lastResult: {
+                ...lastResult,
+                [field]: true,
+                pointsEarned: lastResult.pointsEarned + (field === 'timelineCorrect' ? 2 : 1),
+            },
+        })
     },
 
     nextTurn: () => {
