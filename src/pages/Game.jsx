@@ -8,7 +8,7 @@ export default function Game() {
     const navigate = useNavigate()
     const {
         players, currentPlayerIndex, currentCard, phase,
-        lastResult, setCurrentCard, submitGuess, nextTurn, endGame
+        lastResult, setCurrentCard, submitGuess, nextTurn, endGame, overrideGuess
     } = useGameStore()
 
     const { isReady, isPlaying, playTrack, togglePlay, stopTrack } = useSpotifyPlayer()
@@ -17,8 +17,6 @@ export default function Game() {
     const [guessArtist, setGuessArtist] = useState('')
     const [guessTitle, setGuessTitle] = useState('')
     const [selectedPosition, setSelectedPosition] = useState(null)
-    const [overrideArtist, setOverrideArtist] = useState(false)
-    const [overrideTitle, setOverrideTitle] = useState(false)
 
     const currentPlayer = players[currentPlayerIndex]
 
@@ -44,12 +42,10 @@ export default function Game() {
 
     const handleSubmitGuess = () => {
         if (selectedPosition === null) return
-        submitGuess(guessArtist, guessTitle, selectedPosition, overrideArtist, overrideTitle)
+        submitGuess(guessArtist, guessTitle, selectedPosition)
         setGuessArtist('')
         setGuessTitle('')
         setSelectedPosition(null)
-        setOverrideArtist(false)
-        setOverrideTitle(false)
     }
 
     const handleNextTurn = () => {
@@ -165,48 +161,22 @@ export default function Game() {
                                     <p className="text-zinc-500 text-xs tracking-widest uppercase font-body">
                                         Tus respuestas (+1 punto cada una)
                                     </p>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={guessArtist}
-                                            onChange={e => setGuessArtist(e.target.value)}
-                                            placeholder="Artista..."
-                                            className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-yellow-400
-                                                text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setOverrideArtist(v => !v)}
-                                            title="Marcar artista como correcto"
-                                            className={`w-12 border-2 transition-all font-display text-lg flex items-center justify-center
-                                                ${overrideArtist
-                                                    ? 'border-green-500 bg-green-500/20 text-green-400'
-                                                    : 'border-zinc-700 hover:border-zinc-500 text-zinc-600'
-                                                }`}>
-                                            ✓
-                                        </button>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={guessTitle}
-                                            onChange={e => setGuessTitle(e.target.value)}
-                                            placeholder="Título de la canción..."
-                                            className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-yellow-400
-                                                text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setOverrideTitle(v => !v)}
-                                            title="Marcar título como correcto"
-                                            className={`w-12 border-2 transition-all font-display text-lg flex items-center justify-center
-                                                ${overrideTitle
-                                                    ? 'border-green-500 bg-green-500/20 text-green-400'
-                                                    : 'border-zinc-700 hover:border-zinc-500 text-zinc-600'
-                                                }`}>
-                                            ✓
-                                        </button>
-                                    </div>
+                                    <input
+                                        type="text"
+                                        value={guessArtist}
+                                        onChange={e => setGuessArtist(e.target.value)}
+                                        placeholder="Artista..."
+                                        className="w-full bg-zinc-900 border border-zinc-800 focus:border-yellow-400
+                                            text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={guessTitle}
+                                        onChange={e => setGuessTitle(e.target.value)}
+                                        placeholder="Título de la canción..."
+                                        className="w-full bg-zinc-900 border border-zinc-800 focus:border-yellow-400
+                                            text-white placeholder-zinc-600 px-4 py-3 outline-none transition-all font-body"
+                                    />
                                 </div>
 
                                 {/* Línea temporal */}
@@ -248,8 +218,8 @@ export default function Game() {
 
                         {/* Resultados con stagger */}
                         <div className="space-y-3">
-                            <ResultRow label="Artista" correct={lastResult.artistCorrect} points={1} index={0} />
-                            <ResultRow label="Título" correct={lastResult.titleCorrect} points={1} index={1} />
+                            <ResultRow label="Artista" correct={lastResult.artistCorrect} points={1} index={0} onOverride={() => overrideGuess('artistCorrect')} />
+                            <ResultRow label="Título" correct={lastResult.titleCorrect} points={1} index={1} onOverride={() => overrideGuess('titleCorrect')} />
                             <ResultRow label="Línea temporal" correct={lastResult.timelineCorrect} points={2} index={2} />
                         </div>
 
@@ -311,7 +281,7 @@ function Timeline({ timeline, selectedPosition, onSelectPosition }) {
     )
 }
 
-function ResultRow({ label, correct, points, index = 0 }) {
+function ResultRow({ label, correct, points, index = 0, onOverride }) {
     return (
         <div
             className="flex items-center justify-between py-3 border-b border-zinc-900 animate-fade-up"
@@ -322,9 +292,19 @@ function ResultRow({ label, correct, points, index = 0 }) {
                 </span>
                 <span className="text-zinc-300 tracking-widest text-sm uppercase font-body">{label}</span>
             </div>
-            <span className={`text-lg font-display ${correct ? 'text-green-400' : 'text-zinc-600'}`}>
-                {correct ? `+${points}` : '+0'}
-            </span>
+            <div className="flex items-center gap-3">
+                {!correct && onOverride && (
+                    <button
+                        onClick={onOverride}
+                        className="text-xs tracking-widest uppercase border border-zinc-700 hover:border-green-500
+                            hover:text-green-400 text-zinc-500 px-2 py-1 transition-all font-body">
+                        dar por válido
+                    </button>
+                )}
+                <span className={`text-lg font-display ${correct ? 'text-green-400' : 'text-zinc-600'}`}>
+                    {correct ? `+${points}` : '+0'}
+                </span>
+            </div>
         </div>
     )
 }
